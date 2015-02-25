@@ -98,10 +98,12 @@ trait PlayRun extends PlayInternalKeys {
     val args = Def.spaceDelimited().parsed
 
     val state = Keys.state.value
+    val scope = resolvedScoped.value.scope
     val interaction = playInteractionMode.value
 
     lazy val devModeServer = startDevMode(
       state,
+      scope,
       runHooks.value,
       (javaOptions in Runtime).value,
       dependencyClasspath.value,
@@ -213,7 +215,7 @@ trait PlayRun extends PlayInternalKeys {
    *
    * @return A closeable that can be closed to stop the server
    */
-  private def startDevMode(state: State, runHooks: Seq[play.PlayRunHook], javaOptions: Seq[String],
+  private def startDevMode(state: State, scope: Scope, runHooks: Seq[play.PlayRunHook], javaOptions: Seq[String],
     dependencyClasspath: Classpath, dependencyClassLoader: ClassLoaderCreator,
     reloaderClasspathTask: TaskKey[Classpath], reloaderClassLoader: ClassLoaderCreator,
     assetsClassLoader: ClassLoader => ClassLoader, commonClassLoader: ClassLoader,
@@ -292,7 +294,7 @@ trait PlayRun extends PlayInternalKeys {
     lazy val applicationLoader = dependencyClassLoader("PlayDependencyClassLoader", urls(dependencyClasspath), delegatingLoader)
     lazy val assetsLoader = assetsClassLoader(applicationLoader)
 
-    lazy val reloader = newReloader(state, playReload, reloaderClassLoader, reloaderClasspathTask, assetsLoader,
+    lazy val reloader = newReloader(state, playReload in scope, reloaderClassLoader, reloaderClasspathTask in scope, assetsLoader,
       monitoredFiles, playWatchService)
 
     try {
